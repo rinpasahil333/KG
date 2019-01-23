@@ -72,6 +72,7 @@ public class MainActivity extends AppCompatActivity {
     private void startStreamingService(String url) {
         Intent i = new Intent(this, PlayerService.class);
         i.putExtra("url", url);
+        i.setAction(Constants.ACTION.STARTFOREGROUND_ACTION);
         startService(i);
         bindService(i, mServiceConnection, Context.BIND_AUTO_CREATE);
     }
