@@ -29,16 +29,14 @@ public class MainActivity extends AppCompatActivity {
         playPauseButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-
+                Player.player.togglePlayer();
             }
         });
 
         String url = "https://latestkinnaurisongs.com/files/Kedar%20Negi%20Hits/nalang%20chu%20bare%20kedar.mp3";
-        if (Player.player == null) {
+        if (Player.player == null)
             new Player();
             Player.player.playStream(url);
-        }
-
     }
 
     public static void flipPlayPauseButton(boolean isPlaying){

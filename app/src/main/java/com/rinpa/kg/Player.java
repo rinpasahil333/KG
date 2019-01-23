@@ -2,6 +2,8 @@ package com.rinpa.kg;
 
 import android.media.MediaPlayer;
 import android.media.AudioManager;
+import android.util.Log;
+
 import java.io.IOException;
 
 public class Player {
@@ -30,12 +32,46 @@ public class Player {
             mediaPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
                 @Override
                 public void onPrepared(MediaPlayer mediaPlayer) {
-                    mediaPlayer.start();
+                    playPlayer();
+                }
+            });
+            mediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+                @Override
+                public void onCompletion(MediaPlayer mediaPlayer) {
+                    MainActivity.flipPlayPauseButton(false);
                 }
             });
             mediaPlayer.prepareAsync();
         }catch (IOException e) {
             e.printStackTrace();
+        }
+    }
+
+    public void pausePlayer() {
+        try {
+            mediaPlayer.pause();
+            MainActivity.flipPlayPauseButton(false);
+        }catch (Exception e) {
+            Log.d("EXCEPTION", "Failed to pause the player");
+        }
+    }
+    public void playPlayer() {
+        try {
+            mediaPlayer.start();
+            MainActivity.flipPlayPauseButton(true);
+        }catch (Exception e) {
+            Log.d("EXCEPTION", "Failed to play the player");
+        }
+    }
+
+    public void togglePlayer () {
+        try {
+            if (mediaPlayer.isPlaying())
+                pausePlayer();
+            else
+                playPlayer();
+        }catch (Exception e) {
+            Log.d("EXCEPTION", "Failed to toggle mediaPlayer");
         }
     }
 }
