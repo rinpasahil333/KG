@@ -1,8 +1,16 @@
 package com.rinpa.kg;
 
+import android.content.BroadcastReceiver;
+import android.content.ComponentName;
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
+import android.content.ServiceConnection;
 import android.os.Bundle;
+import android.os.IBinder;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
+import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.View;
@@ -17,6 +25,30 @@ import java.io.IOException;
 public class MainActivity extends AppCompatActivity {
 
     static FloatingActionButton playPauseButton;
+    PlayerService mBoundService;
+    boolean mServiceBound = false;
+
+    private ServiceConnection mServiceConnection = new ServiceConnection() {
+        @Override
+        public void onServiceConnected(ComponentName componentName, IBinder service) {
+            PlayerService.MyBinder myBinder = (PlayerService.MyBinder) service;
+            mBoundService = myBinder.getService();
+            mServiceBound = true;
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName name) {
+            mServiceBound = false;
+        }
+    };
+
+    private BroadcastReceiver mMessageReciever = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            boolean isPlaying = intent.getBooleanExtra("isPlaying",false);
+            flipPlayPauseButton(isPlaying);
+        }
+    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -29,14 +61,40 @@ public class MainActivity extends AppCompatActivity {
         playPauseButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Player.player.togglePlayer();
+                if (mServiceBound)
+                    mBoundService.togglePlayer();
             }
         });
+        startStreamingService("https://latestkinnaurisongs.com/files/Kedar%20Negi%20Hits/nalang%20chu%20bare%20kedar.mp3");
 
-        String url = "https://latestkinnaurisongs.com/files/Kedar%20Negi%20Hits/nalang%20chu%20bare%20kedar.mp3";
-        if (Player.player == null)
-            new Player();
-            Player.player.playStream(url);
+    }
+
+    private void startStreamingService(String url) {
+        Intent i = new Intent(this, PlayerService.class);
+        i.putExtra("url", url);
+        startService(i);
+        bindService(i, mServiceConnection, Context.BIND_AUTO_CREATE);
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        if (mServiceBound) {
+            unbindService(mServiceConnection);
+            mServiceBound = false;
+        }
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        LocalBroadcastManager.getInstance(this).registerReceiver(mMessageReciever, new IntentFilter("changePlayButton"));
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        LocalBroadcastManager.getInstance(this).unregisterReceiver(mMessageReciever);
     }
 
     public static void flipPlayPauseButton(boolean isPlaying){
